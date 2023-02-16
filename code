@@ -1,0 +1,124 @@
+import pygame
+import random
+
+# Initialize Pygame
+pygame.init()
+
+# Set up the window
+win_width = 800
+win_height = 600
+win = pygame.display.set_mode((win_width, win_height))
+pygame.display.set_caption("Snake")
+
+# Load and resize the background image
+background_image = pygame.image.load("background.jpg")
+background_image = pygame.transform.scale(background_image, (800, 600))
+
+# Set up the colors
+bg_color = (255, 255, 255)
+snake_color = (0, 255, 0)
+food_color = (255, 0, 0)
+
+# Set up the game clock
+clock = pygame.time.Clock()
+
+# Set up the snake
+snake_width = 10
+snake_height = 10
+snake_speed = 10
+snake_x = win_width // 2
+snake_y = win_height // 2
+snake_dx = snake_speed
+snake_dy = 0
+snake_segments = [(snake_x, snake_y)]
+
+# Set up the food
+food_width = 10
+food_height = 10
+food_x = random.randint(0, win_width - food_width)
+food_y = random.randint(0, win_height - food_height)
+
+# Set up the score
+score = 0
+
+# Game loop
+game_over = False
+while not game_over:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            game_over = True
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_UP and snake_dy != snake_speed:
+                snake_dx = 0
+                snake_dy = -snake_speed
+            elif event.key == pygame.K_DOWN and snake_dy != -snake_speed:
+                snake_dx = 0
+                snake_dy = snake_speed
+            elif event.key == pygame.K_LEFT and snake_dx != snake_speed:
+                snake_dx = -snake_speed
+                snake_dy = 0
+            elif event.key == pygame.K_RIGHT and snake_dx != -snake_speed:
+                snake_dx = snake_speed
+                snake_dy = 0
+    
+    # Move the snake
+    snake_x += snake_dx
+    snake_y += snake_dy
+    
+    # Check for collisions with the walls
+    if snake_x < 0 or snake_x + snake_width > win_width or snake_y < 0 or snake_y + snake_height > win_height:
+        game_over = True
+    
+    # Check for collisions with the food
+    if (snake_x < food_x + food_width and 
+        snake_x + snake_width > food_x and 
+        snake_y < food_y + food_height and 
+        snake_y + snake_height > food_y):
+        food_x = random.randint(0, win_width - food_width)
+        food_y = random.randint(0, win_height - food_height)
+        score += 1
+        snake_segments.append((snake_x, snake_y))
+        snake_speed += 1  # Increase the snake's speed
+        if score % 5 == 0:
+            food_width += 5  # Increase the food size every 5 points
+            food_height += 5
+        if score % 10 == 0:
+            # Add a new segment to the snake every 10 points
+            snake_segments.append(snake_segments[-1])
+    
+    # Check for collisions with the snake's tail
+    for i in range(len(snake_segments) - 1, 0, -1):
+        snake_segments[i] = snake_segments[i - 1]
+    snake_segments[0] = (snake_x, snake_y)
+    for i in range(1, len(snake_segments)):
+                if (snake_x < snake_segments[i][0] + snake_width and 
+            snake_x + snake_width > snake_segments[i][0] and 
+            snake_y < snake_segments[i][1] + snake_height and 
+            snake_y + snake_height > snake_segments[i][1]):
+                        game_over = True
+
+    
+    # Fill the background color
+    win.fill(bg_color)
+    
+    # Draw the snake
+    for segment in snake_segments:
+        pygame.draw.rect(win, snake_color, (segment[0], segment[1], snake_width, snake_height))
+    
+    # Draw the food
+    pygame.draw.rect(win, food_color, (food_x, food_y, food_width, food_height))
+    
+    # Draw the score
+    font = pygame.font.SysFont(None, 30)
+    text = font.render(f"Score: {score}", True, (0, 0, 0))
+    win.blit(text, (10, 10))
+    
+    # Update the display
+    pygame.display.update()
+    
+    # Set the game clock
+    clock.tick(30)
+    
+# Quit Pygame
+pygame.quit()
+
